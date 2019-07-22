@@ -7,13 +7,23 @@
       <p class="user">{{ city.user }}さんが追加しました。</p>
     </li>
     <div class="city-view" v-if="isView">
-      <div class="view-box">
+      <div class="view-box" v-if="isEdit">
+        <input type="text" v-model="selectedCity.name">
+        <input type="text" v-model="selectedCity.nation">
+        <input type="text" v-model="selectedCity.region">
+        <textarea type="text" v-model="selectedCity.description"></textarea>
+        <div class="btns">
+          <div class="btn" v-on:click="isEdit = false">cancel</div>
+          <div class="btn" v-on:click="saveCity">save</div>
+        </div>
+      </div>
+      <div class="view-box" v-else>
         <p class="name">{{ selectedCity.name }}</p>
         <p class="area">{{ selectedCity.nation }}, {{ selectedCity.region }}</p>
         <p class="description">{{ selectedCity.description }}</p>
         <div class="btns">
-          <div class="btn">edit</div>
-          <div class="btn">delete</div>
+          <div class="btn" v-on:click="isEdit = true">edit</div>
+          <div class="btn" v-on:click="deleteCity">delete</div>
         </div>
       </div>
       <div class="bg" @click="unbindCity(selectedCity.id)"></div>
@@ -31,7 +41,8 @@ export default {
       cities: [],
       selectedCity: {},
       selectedCityId: '',
-      isView: false
+      isView: false,
+      isEdit: false
     }
   },
   firestore () {
@@ -48,6 +59,22 @@ export default {
     unbindCity (id) {
       this.isView = false
       this.$unbind('selectedCity')
+    },
+    deleteCity () {
+      db.collection('cities').doc(this.selectedCityId).delete().then(() => {
+        this.unbindCity(this.selectedCityId)
+      })
+    },
+    saveCity () {
+      db.collection('cities').doc(this.selectedCityId).set({
+        'name': this.selectedCity.name,
+        'nation': this.selectedCity.nation,
+        'region': this.selectedCity.region,
+        'description': this.selectedCity.description,
+        'user': 'guest'
+      }).then(() => {
+        this.isEdit = false
+      })
     }
   }
 }
@@ -129,6 +156,19 @@ export default {
           margin 5px
           padding 5px 0
           border-radius 5px
+
+      input, textarea
+        display block
+        width 90%
+        margin 10px auto
+        font-size 15px
+        padding 10px
+        border 1px solid #eee
+        border-radius 5px
+
+      textarea
+        height 100px
+        resize none
 
     .bg
       background rgba(0,0,0,.9)

@@ -5,7 +5,23 @@
       <div class="btns">
         <p class="btn" v-on:click="isAdd = true">都市を追加する</p>
       </div>
-      <div class="sign-in">?</div>
+      <!-- add start -->
+      <div class="user-info" v-if="isUser">
+        <div class="header">
+          <div class="avatar">
+            <img v-if="user" :src="user.photoURL" alt="avatar">
+          </div>
+          <p v-if="user">{{ user.displayName }}</p>
+          <p v-else>Guest</p>
+        </div>
+        <p class="btn" v-if="user" v-on:click="signOut">Log out</p>
+        <p class="btn" v-else v-on:click="signInWithGoogle">Sign In</p>
+      </div>
+      <div class="sign-in" v-on:click="isUser=!isUser">
+        <img v-if="user" v-bind:src="user.photoURL" alt="avatar">
+        <span v-else>?</span>
+      </div>
+      <!-- add end -->
     </header>
     <!-- added start -->
     <div class="city-view" v-if="isAdd">
@@ -30,6 +46,8 @@
 
 <script>
 import { db } from './main'
+import firebase from 'firebase'
+
 export default {
   name: 'App',
   data () {
@@ -38,8 +56,15 @@ export default {
       name: '',
       nation: '',
       region: '',
-      description: ''
+      description: '',
+      isUser: false,
+      user: null
     }
+  },
+  created () {
+    firebase.auth().onAuthStateChanged(user => {
+      this.user = user
+    })
   },
   methods: {
     addCity () {
@@ -51,6 +76,17 @@ export default {
         'user': 'guest'
       }).then(() => {
         this.isAdd = false
+      })
+    },
+    signInWithGoogle () {
+      const provider = new firebase.auth.GoogleAuthProvider()
+      firebase.auth().signInWithRedirect(provider).then((result) => {
+        this.user = result.user
+      })
+    },
+    signOut () {
+      firebase.auth().signOut().then(() => {
+        this.user = null
       })
     }
   }
